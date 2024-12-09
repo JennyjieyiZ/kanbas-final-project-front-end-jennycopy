@@ -100,7 +100,7 @@ export default function FacultyQuizPreview() {
                         );
                     })}
                     <button className="btn btn-secondary me-3" onClick={handleNavtoQuizzes}>
-                        todo:这个变成导航到编辑
+                        {/* todo:这个变成导航到编辑 */}
                         Edit Quiz
                     </button>
                     <button className="btn btn-danger me-3" onClick={submitQuiz}>

@@ -46,6 +46,25 @@ export const togglePublishQuiz = async (quizId: string) => {
     return data;
 };
 
+
+// Copy a quiz to another course
+export const copyQuiz = async (quizId: string, targetCourseId: string) => {
+    try {
+        const { data } = await axiosWithCredentials.post(`${QUIZZES_API}/${quizId}/copy`, {
+            targetCourseId,
+        });
+        return data.quiz; // Return the copied quiz data
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            // Axios-specific error
+            throw error.response?.data?.error || 'Failed to copy quiz';
+        } else {
+            // Non-Axios error
+            throw 'An unknown error occurred';
+        }
+    }
+};
+
 // ==================== Question Functions ====================
 
 const QUESTIONS_API = `${REMOTE_SERVER}/api/questions`;

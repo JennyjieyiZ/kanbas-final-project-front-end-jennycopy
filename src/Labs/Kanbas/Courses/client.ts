@@ -63,3 +63,20 @@ export const findUsersForCourse = async (courseId: string) => {
     const response = await axios.get(`${COURSES_API}/${courseId}/users`);
     return response.data;
 };
+
+export const getCourses = async () => {
+    try {
+        const { data } = await axiosWithCredentials.get(`${COURSES_API}`);
+        return data; // Assuming the API returns an array of courses
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            // Axios-specific error
+            console.error("Error fetching courses:", error.response?.data || error.message);
+            throw error.response?.data?.error || "Failed to fetch courses.";
+        } else {
+            // Non-Axios error
+            console.error("Unexpected error fetching courses:", error);
+            throw "An unknown error occurred while fetching courses.";
+        }
+    }
+};

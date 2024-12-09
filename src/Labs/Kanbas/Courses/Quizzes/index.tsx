@@ -8,6 +8,7 @@ import Quizzes from "./ShowQuizList";
 import ThreeQuestionEditors from "./FacultyController/Questions/QuestionUpdateEditor/ThreeQuestionEditorsIndex";
 import StudentQuiz from "./Attempts/StudentQuestionIndex";
 import FacultyQuizPreview from "./FacultyQuizPreview";
+import ConfirmTakeQuizPage from "./Attempts/ConfirmTakeQuizPage";
 
 export default function QuizzesRoute() {
     const { cid,qid } = useParams();
@@ -41,6 +42,11 @@ export default function QuizzesRoute() {
                         <Route
                             path=":qid/attempt/:attemptId"
                             element={<StudentQuiz />}
+                        />
+                        {/* 确认参加测验 */}
+                        <Route
+                            path=":qid/attempt"
+                            element={<ConfirmTakeQuizPage />}
                         />
 
                         {/* 老师预览测验 */}

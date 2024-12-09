@@ -4,6 +4,8 @@ import {Modal} from "react-bootstrap";
 import {defaultQuizId, questionInitialState} from "../../questionType";
 import {addQuestionToQuiz} from "../../client";
 import {useParams} from "react-router-dom";
+import {useDispatch} from "react-redux";
+import {addQuestion} from "./reducer";
 
 export default function AddQuestionController() {
     // 用来打开弹窗create new question
@@ -14,15 +16,18 @@ export default function AddQuestionController() {
 
     const [question, setQuestion] = useState(questionInitialState);
     const {qid} = useParams();
-    const handleAddNewQuestion = () => {
+
+    const dispatch = useDispatch();
+    const handleAddNewQuestion = async () => {
         try{
             const formattedQuestion = {
                 ...question,
                 quizId: qid, // 正确的quizId
             };
-
-            const response = addQuestionToQuiz(qid??defaultQuizId,question);
-
+            if(qid){
+                const response = await addQuestionToQuiz(qid, formattedQuestion);
+                dispatch(addQuestion(response));
+            }
         }catch (error){
             console.error("Error creating question:", error);
             alert("Error saving quiz. Please check console logs for more details.");
@@ -36,6 +41,7 @@ export default function AddQuestionController() {
             setQuestion(questionInitialState);
         }
     }, [isModalOpen]);
+
 
     return(
         <div id="wd-question-button" className="p-3">
@@ -139,7 +145,7 @@ export default function AddQuestionController() {
             <div className="d-flex justify-content-center">
                 <div>
                     <button
-                        id="wd-add-assignment"
+                        id="wd-add-questionn"
                         className="btn btn-danger "
                         onClick={openModal}
                     >

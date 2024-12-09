@@ -3,64 +3,95 @@ import {useEffect, useState} from "react";
 import {mockQuiz, Quiz} from "./quizType";
 import {Attempt, attemptInitialState, mockAttempt} from "./Attempts/attemptType";
 import {Question} from "./questionType";
+import {getAttemptById, getQuizById, submitAttempt} from "./client";
 //todo:写完学生的加这个就行，就是多加了个按钮并且edit quiz是直接返回到对应的edit页面，然后去除掉次数限制
 
 export default function FacultyQuizPreview() {
     const { cid,qid, attemptId } = useParams();
     const navigate = useNavigate();
-    const [quiz, setQuiz] = useState<Quiz | null>(null);
+    const [quiz, setQuiz] = useState<Quiz>();
     const [answers, setAnswers] = useState<{ [key: string]: string }>({});
-    const [attempt, setAttempt] = useState<Attempt>(attemptInitialState);//这个可以是null
+    const [attempt, setAttempt] = useState<Attempt>();//这个可以是null
     const [score, setScore] = useState<number | null>(null);
-    //todo:感觉有问题，需要createattempt,看看这个功能放哪里，应该是点击quzi学生点击attempt的时候，那可能就直接fetch attempt id了
     useEffect(() => {
         const fetchQuizData = async () => {
-            //todo:数据换成真正的数据
-            const fetchedQuiz: Quiz = mockQuiz;
-            setQuiz(fetchedQuiz);
-
-            // todo：直接根据id获取新建的attempt,用attemptId
-            const fetchAttempt: Attempt = mockAttempt;
-            setAttempt(fetchAttempt);
+            try {
+                if (qid && attemptId) {
+                    // 获取 Quiz 数据
+                    const fetchedQuiz = await getQuizById(qid);
+                    setQuiz(fetchedQuiz);
+                    console.log("分数是 "+ fetchedQuiz.points)
+                    // 根据 attemptId 获取 Attempt 数据
+                    const populatedAttempt = await getAttemptById(qid, attemptId);
+                    setAttempt(populatedAttempt);
+                } else {
+                    console.error('Missing qid or attemptId');
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
         };
 
         fetchQuizData();
-    }, [qid]);
+    }, []);
 
     const handleAnswerChange = (questionId: string, answer: string) => {
+        // 更新 answers 状态
         setAnswers((prev) => ({ ...prev, [questionId]: answer }));
+
+        // 更新 attempt.answers
+        setAttempt((prevAttempt) => {
+            if (!prevAttempt) return prevAttempt;
+
+            // 更新指定 questionId 的答案
+            const updatedAnswers = prevAttempt.answers.map((a) => {
+                const id = typeof a.questionId === 'string' ? a.questionId : a.questionId._id;
+                return id === questionId ? { ...a, answer } : a;
+            });
+
+            return { ...prevAttempt, answers: updatedAnswers };
+        });
     };
 
     //注意这个是交了后的数据，别和fetch的弄混了
     const submitQuiz = async () => {
-        if (!quiz) return;
-        //todo:这个是拿到返回的真实值
-        const submitedAttempt = mockAttempt;
-        //todo:提交后拿到返回的数据，给个分数
-        setScore(submitedAttempt.score);
-        // 模拟存储尝试
-        setAttempt(submitedAttempt) //这个应该就是展示下分数了
+        if (!quiz || !attempt) return;
+        console.log("Submitting answers:", attempt.answers);
+        if (qid && attemptId) {
+            try {
+                const submittedAttempt = await submitAttempt(attemptId, attempt.answers);
+                console.log("传回来的是:", submittedAttempt.answers);
+                setScore(submittedAttempt.score);
+            } catch (error) {
+                console.error("Error submitting quiz:", error);
+            }
+        }
     };
-    //todo: 这个变了一下
+
+
     const handleNavtoQuizzes =()=>{
-        navigate(`/Kanbas/Courses/${cid}/Quizzes/${qid}/editor`); // 动态导航到该课程的编辑
+        setAttempt(undefined)
+        setScore(0)
+        navigate(`/Kanbas/Courses/${cid}/Quizzes`); // 动态导航到该课程的 Quizzes 页面
     }
-    //todo: 去除了这个
-    // if (quiz && attempt.attemptNumber >= quiz.settings.attemptsAllowed) {
-    //     return <p>You have reached the maximum number of attempts for this quiz.</p>;
-    // }
+
+    const handleNavtoEditQuizzes =()=>{
+        setAttempt(undefined)
+        setScore(0)
+        navigate(`/Kanbas/Courses/${cid}/Quizzes/${qid}/editor`); // 动态导航到该课程的 Quizzes 页面
+    }
+
 
     return (
+
         <div className="container mt-4">
-            {quiz && (
+            {quiz && attempt && (
                 <>
                     <h2>{quiz.title}</h2>
                     <p>
-                        Attempt {attempt.attemptNumber + 1}/{quiz.settings.attemptsAllowed}
+                        Attempt {attempt.attemptNumber}/{quiz.settings.attemptsAllowed}
                     </p>
-                    {/*todo: 这个有可能没populate过来，注意下*/}
                     {attempt.answers.map((answer) => {
-                        // Type Narrowing: Check if `answer.questionId` is a `Question` object or a string
                         const question = typeof answer.questionId === "string" ? null : (answer.questionId as Question);
 
                         return (
@@ -70,7 +101,7 @@ export default function FacultyQuizPreview() {
 
                                 {/* Render Multiple Choice or True/False options */}
                                 {question?.type === "Multiple Choice" || question?.type === "True/False" ? (
-                                    question.choices?.map((option: string) => (
+                                    (question.type === "True/False" ? ["True", "False"] : question.choices || []).map((option: string) => (
                                         <div key={option}>
                                             <input
                                                 type="radio"
@@ -100,13 +131,28 @@ export default function FacultyQuizPreview() {
                         );
                     })}
                     <button className="btn btn-secondary me-3" onClick={handleNavtoQuizzes}>
+<<<<<<< HEAD
                         {/* todo:这个变成导航到编辑 */}
                         Edit Quiz
+=======
+                        Back to Quizzes
+>>>>>>> 78f23c1d1efec7814e1ed665e5963af83dc181df
                     </button>
-                    <button className="btn btn-danger me-3" onClick={submitQuiz}>
+                    <button
+                        className="btn me-3 btn-danger"
+                        onClick={submitQuiz}
+                    >
                         Submit Quiz
                     </button>
-                    {score !== null && <p>Your Score: {score}/{quiz.points}</p>}
+                    <button
+                        className="btn me-3 btn-secondary text-end"
+                        onClick={handleNavtoEditQuizzes}
+                    >
+                        Edit Quiz
+                    </button>
+
+                    <hr/>
+                    <h3 className="text-center">{score !== null && <p>Your Score: {score} / {quiz.points}</p>}</h3>
                 </>
             )}
         </div>

@@ -4,11 +4,20 @@ import GreenPublishedCheckmark from "./GreenMark";
 import CopyQuizButton from "../../Quizzes/CopyQuizButton"; // 引入 CopyQuizButton 组件
 
 export default function QuizControlButtons({
+<<<<<<< HEAD
     quiz,
     deleteQuiz,
     editQuiz,
     publishQuiz,
 }: {
+=======
+                                               quiz,
+                                               deleteQuiz,
+                                               editQuiz,
+                                               publishQuiz,
+                                               sortQuizzes,
+                                           }: {
+>>>>>>> 78f23c1d1efec7814e1ed665e5963af83dc181df
     quiz: {
         _id: string;
         published: boolean;
@@ -16,6 +25,7 @@ export default function QuizControlButtons({
     deleteQuiz: (quizId: string) => void;
     editQuiz: (quizId: string) => void;
     publishQuiz: (quizId: string, publish: boolean) => void;
+    sortQuizzes: (quizId: string) => void;
 }) {
     const [menuVisible, setMenuVisible] = useState(false);
     const [showCopyDialog, setShowCopyDialog] = useState(false); // 控制复制测验对话框显示
@@ -75,6 +85,7 @@ export default function QuizControlButtons({
                     >
                         {quiz.published ? "Unpublish" : "Publish"}
                     </button>
+<<<<<<< HEAD
 
                     {/* 复制测验按钮 */}
                     <button
@@ -102,6 +113,17 @@ export default function QuizControlButtons({
                             Cancel
                         </button>
                     </div>
+=======
+                    <button
+                        className="btn btn-link text-start w-100 text-decoration-none text-dark"
+                        onClick={() => {
+                            sortQuizzes(quiz._id);
+                            setMenuVisible(false);
+                        }}
+                    >
+                        Sort
+                    </button>
+>>>>>>> 78f23c1d1efec7814e1ed665e5963af83dc181df
                 </div>
             )}
         </div>

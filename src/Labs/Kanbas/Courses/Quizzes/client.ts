@@ -14,9 +14,11 @@ export const createQuiz = async (courseId: string, quiz: any) => {
 };
 
 // Retrieve a list of quizzes for a course
-export const getQuizzesByCourse = async (courseId: string) => {
-    const { data } = await axios.get(`${COURSES_API}/${courseId}/quizzes`);
-    return data;
+export const getQuizzesByCourse = async (courseId: string, sort?: string) => {
+    const response = await axios.get(`${COURSES_API}/${courseId}/quizzes`, {
+        params: { sort }
+    });
+    return response.data;
 };
 
 // Retrieve details of a specific quiz
@@ -126,6 +128,7 @@ export const startAttempt = async (quizId: string, studentId: string) => {
 
 // Submit answers for a quiz attempt (Students)
 export const submitAttempt = async (attemptId: string, answers: any) => {
+
     const { data } = await axiosWithCredentials.post(
         `${ATTEMPTS_API}/${attemptId}/submit`,
         { answers }

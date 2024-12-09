@@ -1,6 +1,6 @@
-import {useState} from "react";
-import {Question} from "../../../questionType";
-import {useNavigate, useParams} from "react-router-dom";
+import { useState } from "react";
+import { Question } from "../../../questionType";
+import { useNavigate, useParams } from "react-router-dom";
 
 interface MultipleChoiceEditorProps {
     question: Question; // Question passed as a prop
@@ -13,11 +13,16 @@ export default function MultipleChoiceEditor({ question, onSave, onCancel }: Mul
     const [points, setPoints] = useState<number>(question.points);
     const [questionText, setQuestionText] = useState<string>(question.questionText);
     const [choices, setChoices] = useState<string[]>(question.choices || []);
+    const [correctAnswer, setCorrectAnswer] = useState<string>(question.correctAnswer || ""); // Single correct answer
 
     const handleChoiceChange = (index: number, value: string) => {
         setChoices((prev) => {
             const updatedChoices = [...prev];
             updatedChoices[index] = value;
+            // 如果修改的选项是当前的正确答案，更新它的值
+            if (correctAnswer === choices[index]) {
+                setCorrectAnswer(value);
+            }
             return updatedChoices;
         });
     };
@@ -25,20 +30,34 @@ export default function MultipleChoiceEditor({ question, onSave, onCancel }: Mul
     const addChoice = () => setChoices((prev) => [...prev, ""]); // Add a new empty choice
 
     const removeChoice = (index: number) => {
+        const choiceToRemove = choices[index];
         setChoices((prev) => prev.filter((_, i) => i !== index)); // Remove the specified choice
+
+        // 如果删除的选项是正确答案，则清空正确答案
+        if (choiceToRemove === correctAnswer) {
+            setCorrectAnswer("");
+        }
     };
 
     const handleSave = () => {
+        if (!choices.includes(correctAnswer)) {
+            alert("Please select a valid correct answer.");
+            return;
+        }
+
         onSave({
             ...question,
             title,
             points,
             questionText,
             choices,
+            correctAnswer,
         });
     };
-    const navigate = useNavigate()
-    const {cid,qid} = useParams()
+
+    const navigate = useNavigate();
+    const { cid, qid } = useParams();
+
     const handleCancel = () => {
         navigate(`/Kanbas/Courses/${cid}/Quizzes/${qid}/editor/questions`);
     };
@@ -97,6 +116,22 @@ export default function MultipleChoiceEditor({ question, onSave, onCancel }: Mul
                 <button className="btn btn-primary" onClick={addChoice}>
                     Add Choice
                 </button>
+            </div>
+
+            <div className="mt-3">
+                <label>Correct Answer</label>
+                <select
+                    className="form-control"
+                    value={correctAnswer}
+                    onChange={(e) => setCorrectAnswer(e.target.value)}
+                >
+                    <option value="">Select Correct Answer</option>
+                    {choices.map((choice, index) => (
+                        <option key={index} value={choice}>
+                            {choice}
+                        </option>
+                    ))}
+                </select>
             </div>
 
             <div className="mt-4">

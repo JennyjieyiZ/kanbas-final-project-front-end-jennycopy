@@ -70,7 +70,9 @@ export default function QuizEditor() {
     return (
         <div className="container mt-4">
 
-            <h5 className="text-end">points {quiz.points} | Publish: {quiz.published ? "Published" : "Unpublished"}</h5>
+            <h5 className="text-end">
+                Points: {quiz.points || 0} | Publish: {quiz.published ? "Published" : "Unpublished"}
+            </h5>
             {/* Tabs */}
             <div className="tabs">
                 <Link to="" className="tab px-3 py-2 border border-black text-dark text-decoration-none">
@@ -135,7 +137,8 @@ export default function QuizEditor() {
                         type="number"
                         className="form-control"
                         value={quiz.points}
-                        onChange={(e) => handleInputChange("points", +e.target.value)}
+                        disabled
+                        readOnly
                     />
                 </div>
             </div>
@@ -403,9 +406,9 @@ export default function QuizEditor() {
                     <button
                         className="btn btn-danger float-end me-3"
                         onClick={() => {
-                        handleUpdateQuiz();
-                        handleNavtoQuizzes();
-                    }}
+                            handleUpdateQuiz();
+                            handleNavtoQuizzes();
+                        }}
                     >
                         Save
                     </button>

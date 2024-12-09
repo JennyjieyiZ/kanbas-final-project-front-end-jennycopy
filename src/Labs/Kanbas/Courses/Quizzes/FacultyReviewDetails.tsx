@@ -1,14 +1,35 @@
 import { FaPencil } from "react-icons/fa6";
-import {Link, useParams} from "react-router-dom";
-import {getQuizById} from "./client";
+import {Link, useNavigate, useParams} from "react-router-dom";
+import {getQuizById, startAttempt} from "./client";
 import {useEffect, useState} from "react";
 import {mockQuiz, Quiz} from "./quizType";
-import {Attempt, mockAttempt} from "./Attempts/attemptType";
+import {useSelector} from "react-redux";
+
+
+interface User {
+    _id: string;
+    role: string;
+}
+
+interface Enrollment {
+    user: string;
+    course: string;
+}
+interface RootState {
+    accountReducer: {
+        currentUser: User;
+    };
+    enrollmentReducer: {
+        enrollments: Enrollment[];
+    };
+}
+
 
 export default function FacultyReviewQuizDetails() {
     //获得qid的数据，好fetch数据
     const{cid, qid} = useParams();
     const [quiz, setQuiz] = useState<Quiz | null>(mockQuiz);
+    const { currentUser } = useSelector((state: RootState) => state.accountReducer);
 
     //todo:fetch数据之后，用useeffect在qid变化的时候更新，然后把数值弄上去
     const handleGetQuizById = async () => {
@@ -22,15 +43,27 @@ export default function FacultyReviewQuizDetails() {
         handleGetQuizById();
     }, []);
 
+    const navigate = useNavigate();
+
+    const handleStartQuiz = async () => {
+
+        try {
+            const newAttempt = await startAttempt(qid!, currentUser._id!);
+            const attemptId = newAttempt._id;
+            navigate(`/Kanbas/Courses/${cid}/Quizzes/${qid}/attempt/${attemptId}/faculty`);
+        } catch (err) {
+            console.error("Error starting quiz attempt:", err);
+        }
+    };
+
     return (
         <div>
             <div className="d-flex justify-content-center align-items-center">
-                todo:加一下preview,然后创建新的attempt,然后导航，现在没法获得attemptid
-                <button id="wd-add-assignment-btn" className="btn btn-lg btn-secondary me-4">
-                    <Link to={`/Kanbas/Courses/${cid}/Quizzes/${qid}/attempt/1234/faculty`}
-                          className="text-decoration-none text-black">
+                <button id="wd-add-assignment-btn"
+                        onClick={() => handleStartQuiz()}
+                        className="btn btn-lg btn-secondary me-4"
+                >
                         Preview
-                    </Link>
                 </button>
                 <button id="wd-add-assignment-btn" className="btn btn-lg btn-secondary me-4">
                     <Link to={`/Kanbas/Courses/${cid}/Quizzes/${qid}/editor`}

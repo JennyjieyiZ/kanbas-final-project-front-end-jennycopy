@@ -9,13 +9,13 @@ export default function TOC() {
                 </a>
             </li>
             <li className="nav-item">
-                <a id="wd-github" href="https://github.com/nononoononon/kanbas-react-web-app-fa2024"
+                <a id="wd-github" href="https://github.com/nononoononon/kanbas-final-project-front-end"
                    className="nav-link">
-                    My GitHub for react
+                    GitHub for react
                 </a>
             </li>
             <li className="nav-item">
-                <a id="wd-github" href="https://kanbas-node-server-app-ylxc.onrender.com" className="nav-link">
+                <a id="wd-github" href="https://fianlprojectofwebdev.netlify.app" className="nav-link">
                     react server on Netlify
                 </a>
             </li>
@@ -26,7 +26,7 @@ export default function TOC() {
                 </a>
             </li>
             <li className="nav-item">
-                <a id="wd-github" href="https://kanbas-node-server-app-ylxc.onrender.com" className="nav-link">
+                <a id="wd-github" href="https://kanbas-final-project-f4da.onrender.com" className="nav-link">
                     Node server on Render
                 </a>
             </li>

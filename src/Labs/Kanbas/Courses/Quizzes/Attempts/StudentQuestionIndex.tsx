@@ -3,72 +3,123 @@ import {useEffect, useState} from "react";
 import {mockQuiz, Quiz, quizInitialState} from "../quizType";
 import {Attempt, attemptInitialState, mockAttempt} from "./attemptType";
 import {Question} from "../questionType";
+import {getAttemptById, getQuizById, submitAttempt} from "../client";
 
 export default function StudentQuiz() {
     const { cid,qid, attemptId } = useParams();
     const navigate = useNavigate();
-    const [quiz, setQuiz] = useState<Quiz | null>(null);
+    const [quiz, setQuiz] = useState<Quiz>();
     const [answers, setAnswers] = useState<{ [key: string]: string }>({});
-    const [attempt, setAttempt] = useState<Attempt>(attemptInitialState);//这个可以是null
+    const [attempt, setAttempt] = useState<Attempt>();//这个可以是null
     const [score, setScore] = useState<number | null>(null);
-    //todo:感觉有问题，需要createattempt,看看这个功能放哪里，应该是点击quzi学生点击attempt的时候，那可能就直接fetch attempt id了
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [answerFeedback, setAnswerFeedback] = useState<{ [key: string]: boolean } | null>(null);
+
     useEffect(() => {
         const fetchQuizData = async () => {
-            //todo:数据换成真正的数据
-            const fetchedQuiz: Quiz = mockQuiz;
-            setQuiz(fetchedQuiz);
-
-            // todo：直接根据id获取新建的attempt,用attemptId
-            const fetchAttempt: Attempt = mockAttempt;
-            setAttempt(fetchAttempt);
+            try {
+                if (qid && attemptId) {
+                    // 获取 Quiz 数据
+                    const fetchedQuiz = await getQuizById(qid);
+                    setQuiz(fetchedQuiz);
+                    console.log("分数是 "+ fetchedQuiz.points)
+                    // 根据 attemptId 获取 Attempt 数据
+                    const populatedAttempt = await getAttemptById(qid, attemptId);
+                    setAttempt(populatedAttempt);
+                } else {
+                    console.error('Missing qid or attemptId');
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
         };
 
         fetchQuizData();
-    }, [qid]);
+    }, []);
 
     const handleAnswerChange = (questionId: string, answer: string) => {
+        // 更新 answers 状态
         setAnswers((prev) => ({ ...prev, [questionId]: answer }));
+
+        // 更新 attempt.answers
+        setAttempt((prevAttempt) => {
+            if (!prevAttempt) return prevAttempt;
+
+            // 更新指定 questionId 的答案
+            const updatedAnswers = prevAttempt.answers.map((a) => {
+                const id = typeof a.questionId === 'string' ? a.questionId : a.questionId._id;
+                return id === questionId ? { ...a, answer } : a;
+            });
+
+            return { ...prevAttempt, answers: updatedAnswers };
+        });
     };
 
-    //注意这个是交了后的数据，别和fetch的弄混了
+    //注意这个是交了后的数据
     const submitQuiz = async () => {
-        if (!quiz) return;
-        //todo:这个是拿到返回的真实值
-       const submitedAttempt = mockAttempt;
-        //todo:提交后拿到返回的数据，给个分数
-        setScore(submitedAttempt.score);
-        // 模拟存储尝试
-        setAttempt(submitedAttempt) //这个应该就是展示下分数了
+        if (!quiz || !attempt) return;
+        if (isSubmitting) return; // 防止多次触发
+        setIsSubmitting(true);
+        //console.log("Submitting answers:", attempt.answers);
+        if (qid && attemptId) {
+            try {
+                const submittedAttempt = await submitAttempt(attemptId, attempt.answers);
+                //console.log("传回来的是:", submittedAttempt.answers);
+                setScore(submittedAttempt.score);
+
+                // 更新答案对错信息
+                const feedback: { [key: string]: boolean } = {};
+                submittedAttempt.answers.forEach((answer: any) => {
+                    const questionId = typeof answer.questionId === 'string' ? answer.questionId : answer.questionId._id;
+                    feedback[questionId] = answer.isCorrect;
+                });
+                setAnswerFeedback(feedback);
+            } catch (error) {
+                console.error("Error submitting quiz:", error);
+            }
+        }
     };
+
+
     const handleNavtoQuizzes =()=>{
+        setAttempt(undefined)
+        setScore(0)
         navigate(`/Kanbas/Courses/${cid}/Quizzes`); // 动态导航到该课程的 Quizzes 页面
     }
 
-    if (quiz && attempt.attemptNumber >= quiz.settings.attemptsAllowed) {
-        return <p>You have reached the maximum number of attempts for this quiz.</p>;
+    if (quiz && attempt && attempt.attemptNumber  > quiz.settings.attemptsAllowed) {
+        return <h3 className="text-center ">You have reached the maximum number of attempts for this quiz.</h3>;
     }
 
     return (
+
         <div className="container mt-4">
-            {quiz && (
+            {quiz && attempt && (
                 <>
                     <h2>{quiz.title}</h2>
                     <p>
-                        Attempt {attempt.attemptNumber + 1}/{quiz.settings.attemptsAllowed}
+                        Attempt {attempt.attemptNumber }/{quiz.settings.attemptsAllowed}
                     </p>
-                    {/*todo: 这个有可能没populate过来，注意下*/}
                     {attempt.answers.map((answer) => {
-                        // Type Narrowing: Check if `answer.questionId` is a `Question` object or a string
                         const question = typeof answer.questionId === "string" ? null : (answer.questionId as Question);
 
                         return (
                             <div key={question?._id ?? (answer.questionId as string)} className="mb-3">
                                 {/* Render the Question */}
-                                <h5>{question?.questionText ?? "Question not available"}</h5>
+                                <h5>{question?.questionText ?? "Question not available"}
+
+                                    {answerFeedback && answerFeedback[question?._id ?? (answer.questionId as string)] !== undefined && (
+                                        answerFeedback[question?._id ?? (answer.questionId as string)] ? (
+                                            <span className="ms-2 text-success">✔</span> // 对号
+                                        ) : (
+                                            <span className="ms-2 text-danger">✖</span> // 错号
+                                        )
+                                    )}
+                                </h5>
 
                                 {/* Render Multiple Choice or True/False options */}
                                 {question?.type === "Multiple Choice" || question?.type === "True/False" ? (
-                                    question.choices?.map((option: string) => (
+                                    (question.type === "True/False" ? ["True", "False"] : question.choices || []).map((option: string) => (
                                         <div key={option}>
                                             <input
                                                 type="radio"
@@ -100,10 +151,15 @@ export default function StudentQuiz() {
                     <button className="btn btn-secondary me-3" onClick={handleNavtoQuizzes}>
                         Back to Quizzes
                     </button>
-                    <button className="btn btn-danger me-3" onClick={submitQuiz}>
+                    <button
+                        className={`btn me-3 ${isSubmitting ? "btn-secondary" : "btn-danger"}`}
+                        onClick={submitQuiz}
+                        disabled={isSubmitting}
+                    >
                         Submit Quiz
                     </button>
-                    {score !== null && <p>Your Score: {score}/{quiz.points}</p>}
+                    <hr/>
+                    <h3 className="text-center">{score !== null && <p>Your Score: {score} / {quiz.points}</p>}</h3>
                 </>
             )}
         </div>
